@@ -14,7 +14,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fullUrl TEXT, 
             shortUrl TEXT UNIQUE,
-            createdAt DATE
+            createdAt TIMESTAMP
             )`,
       (err) => {
         if (err) {

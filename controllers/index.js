@@ -20,14 +20,16 @@ const storeUrlShort = (fullUrl, shortUrl, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-    // res.json({
-    //   message: 'Success!',
-    //   data: data,
-    //   id: this.lastID,
-    // });
+    res.send(shortUrl);
   });
 
   res.redirect('/');
+};
+
+const validateShortcode = (shortUrl) => {
+  const validCodeMatcher = /^[A-z0-9]{4,}$/;
+  const isShortcodeValid = validCodeMatcher.test(shortUrl);
+  return isShortcodeValid;
 };
 
 exports.createUrl = (req, res, next) => {
@@ -44,20 +46,26 @@ exports.createUrl = (req, res, next) => {
     }
 
     if (req.body.shortUrl) {
-      db.get(
-        `SELECT 1 FROM urls WHERE shortUrl = ?`,
-        [req.body.shortUrl],
-        (err, queryResult) => {
-          if (queryResult !== undefined) {
-            errors.push('Shortcode already in use');
-            res.status(400).json({ error: errors.join(',') });
-            return;
-          } else {
-            shortUrl = req.body.shortUrl;
-            storeUrlShort(req.body.fullUrl, shortUrl, res);
+      if (!validateShortcode(req.body.shortUrl)) {
+        errors.push('Shortcode is not valid, only numbers and letters allowed');
+        res.status(404).json({ error: errors.join(',') });
+        return;
+      } else {
+        db.get(
+          `SELECT 1 FROM urls WHERE shortUrl = ?`,
+          [req.body.shortUrl],
+          (err, queryResult) => {
+            if (queryResult !== undefined) {
+              errors.push('Shortcode already in use');
+              res.status(400).json({ error: errors.join(',') });
+              return;
+            } else {
+              shortUrl = req.body.shortUrl;
+              storeUrlShort(req.body.fullUrl, shortUrl, res);
+            }
           }
-        }
-      );
+        );
+      }
     } else {
       if (errors.length) {
         res.status(400).json({ error: errors.join(',') });
@@ -84,11 +92,6 @@ const addClick = (id, url, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-    // res.json({
-    //     message: 'Success!',
-    //     data: data,
-    //     id: this.lastID,
-    //   });
 
     res.redirect(url);
   });
