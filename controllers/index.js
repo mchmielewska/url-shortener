@@ -3,6 +3,7 @@ const db = require('../database');
 const alphabet =
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(alphabet, 6);
+const _ = require('lodash');
 
 const storeUrlShort = (fullUrl, shortUrl, res) => {
   const data = {
@@ -19,11 +20,11 @@ const storeUrlShort = (fullUrl, shortUrl, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-    res.json({
-      message: 'Success!',
-      data: data,
-      id: this.lastID,
-    });
+    // res.json({
+    //   message: 'Success!',
+    //   data: data,
+    //   id: this.lastID,
+    // });
   });
 
   res.redirect('/');
@@ -83,23 +84,76 @@ const addClick = (id, url, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
+    // res.json({
+    //     message: 'Success!',
+    //     data: data,
+    //     id: this.lastID,
+    //   });
+
+    res.redirect(url);
   });
-  res.redirect(url);
 };
 
-exports.getUrl = (req, res, next) => {
+exports.goToUrl = (req, res, next) => {
   const errors = [];
   db.get(
     `SELECT * FROM urls WHERE shortURL = ?`,
     [req.params.shortUrl],
-    (err, row) => {
+    (err, queryResult) => {
       if (err) {
         errors.push('Shortcode not found');
         res.status(404).json({ error: errors.join(',') });
         return;
       }
 
-      addClick(row.id, row.fullUrl, res);
+      addClick(queryResult.id, queryResult.fullUrl, res);
+    }
+  );
+};
+
+exports.getStats = (req, res, next) => {
+  const errors = [];
+  db.get(
+    `SELECT * FROM urls WHERE shortURL = ?`,
+    [req.params.shortUrl],
+    (err, queryResult) => {
+      if (err || queryResult === undefined) {
+        errors.push('Shortcode not found');
+        res.status(404).json({ error: errors.join(',') });
+        return;
+      } else {
+        const createdAt = queryResult.createdAt;
+        const allVisits = [];
+        db.each(
+          `SELECT * FROM stats WHERE urlId = ? ORDER BY date`,
+          [queryResult.id],
+          (err, row) => {
+            if (err) {
+              res.status(400).json({ error: err.message });
+              return;
+            } else {
+              allVisits.push(row);
+            }
+          },
+          () => {
+            const stats = _.map(allVisits, (element) =>
+              _.pick(element, ['date'])
+            );
+            const dates = stats.map((element) => {
+              return element.date;
+            });
+            const lastVisit = dates[dates.length - 1];
+            const clicksCount = stats.length;
+            const response = {
+              createdAt,
+              lastVisit,
+              dates,
+              clicksCount,
+            };
+            res.send(response);
+          }
+        );
+      }
     }
   );
 };
