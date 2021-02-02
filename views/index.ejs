@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/css/index.css" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> 
     <title>Document</title>
   </head>
   <body>
@@ -41,7 +42,7 @@
           <tr>
             <td><a href="<%= url.fullUrl %>"><%= url.fullUrl %></a></td>
             <td><a href="<%= url.shortUrl %>"><%= url.shortUrl %></a></td>
-            <td><a href="<%= url.shortUrl %>/stats">stats</a></td>
+            <td><a href="<%= url.shortUrl %>/stats" class="btn">stats</a></td>
           </tr>
           <% }) %>
         </tbody>

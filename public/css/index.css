@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    font-family: 'Roboto', sans-serif;
 }
 
 body {
@@ -8,14 +9,18 @@ body {
     line-height: 1.5;
 }
 
+h1 {
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2rem;
+    color: #0c5572;
+    margin: 1rem 0;
+}
+
 .container {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-h1 {
-    margin: 1rem 0;
 }
 
 .form-input {
@@ -36,13 +41,37 @@ h1 {
     margin: 0.5rem 0;
     border-radius: 5px;
     color: #0c5572;
+    background-color: #FFFFFF;
     border: 1px solid #9ac0cf;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.12),0 1px 5px 0 rgba(0,0,0,0.2);
     transition-duration: 0.4s;
     cursor: pointer;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
 }
 
 .btn:hover {
     background-color: #8cbccf;
     color: #FFFFFF;
+}
+
+.table {
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.12),0 1px 5px 0 rgba(0,0,0,0.2);
+    padding: 0.5rem;
+    margin: 1rem 0;
+    font-size: 0.8rem;
+}
+
+.table td {
+    padding: 0.5rem;
+    max-width: 400px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+a.btn {
+    text-decoration: none;
+    font-size: 0.8rem;
 }
