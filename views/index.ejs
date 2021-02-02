@@ -1,23 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/index.css" type="text/css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/index.css" type="text/css" />
     <title>Document</title>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Shortster</h1>
-        <form action="" method="POST">
-            <label for="originalUrl">Enter a long url to make it shorter</label>
-            <input class="form-input" required placeholder="url" type="url" name="originalUrl" id="originalUrl">
-            <br>
-            <label for="shortcode">Custom shortcode (optional)</label>
-            <input class="form-input" type="text" name="shortcode" id="shortcode">
-            <br>
-            <button class="btn" type="submit">Make it shorter!</button>
-        </form>
+      <h1>Shortster</h1>
+      <form action="/shortenurl" method="POST">
+        <label for="fullUrl">Enter a long url to make it shorter</label>
+        <input
+          class="form-input"
+          required
+          placeholder="url"
+          type="url"
+          name="fullUrl"
+          id="fullUrl"
+        />
+        <br />
+        <label for="shortUrl">Custom shortcode (optional)</label>
+        <input class="form-input" type="text" name="shortUrl" id="shortUrl" />
+        <br />
+        <button class="btn" type="submit">Make it shorter!</button>
+      </form>
+      <div id="errors">
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Full URL</th>
+            <th>Short URL</th>
+            <th>Clicks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% allUrls.forEach(url => { %>
+          <tr>
+            <td><a href="<%= url.fullUrl %>"><%= url.fullUrl %></a></td>
+            <td><a href="<%= url.shortUrl %>"><%= url.shortUrl %></a></td>
+            <td><a href="<%= url.shortUrl %>/stats">stats</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
     </div>
-</body>
+  </body>
 </html>

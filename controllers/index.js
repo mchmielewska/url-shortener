@@ -1,84 +1,35 @@
-const { customAlphabet } = require('nanoid');
+const { validateShortcode, generateUniqueShortcode, validateFullUrl } = require ('../lib/dataValidation');
+const { storeUrlShort } = require ('../lib/dataStorage');
+const { clicksCount, lastVisitDate, getDates } = require ('../lib/stats');
 const db = require('../database');
-const alphabet =
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const nanoid = customAlphabet(alphabet, 6);
-const _ = require('lodash');
-
-const storeUrlShort = (fullUrl, shortUrl, res) => {
-  const data = {
-    fullUrl: fullUrl,
-    shortUrl: shortUrl,
-    createdAt: Date.now(),
-  };
-
-  const sql = 'INSERT INTO urls (fullUrl, shortUrl, createdAt) VALUES (?,?,?)';
-  const params = [data.fullUrl, data.shortUrl, data.createdAt];
-
-  db.run(sql, params, (err, sqlRes) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.send(shortUrl);
-  });
-
-  res.redirect('/');
-};
-
-const validateShortcode = (shortUrl) => {
-  const validCodeMatcher = /^[A-z0-9]{4,}$/;
-  const isShortcodeValid = validCodeMatcher.test(shortUrl);
-  return isShortcodeValid;
-};
 
 exports.createUrl = (req, res, next) => {
-  const errors = [];
-  let shortUrl;
-  db.serialize(() => {
-    if (!req.body.fullUrl) {
-      errors.push('Full url not specified');
-    }
-    if (req.body.shortUrl && req.body.shortUrl.length < 4) {
-      errors.push(
-        'Shortcode is too short, it has to be at least 4 characters long'
-      );
-    }
+  let errors = [];
+  let shortUrl = req.body.shortUrl;
+  let fullUrl = req.body.fullUrl;
 
-    if (req.body.shortUrl) {
-      if (!validateShortcode(req.body.shortUrl)) {
-        errors.push('Shortcode is not valid, only numbers and letters allowed');
-        res.status(404).json({ error: errors.join(',') });
-        return;
-      } else {
-        db.get(
-          `SELECT 1 FROM urls WHERE shortUrl = ?`,
-          [req.body.shortUrl],
-          (err, queryResult) => {
-            if (queryResult !== undefined) {
-              errors.push('Shortcode already in use');
-              res.status(400).json({ error: errors.join(',') });
-              return;
-            } else {
-              shortUrl = req.body.shortUrl;
-              storeUrlShort(req.body.fullUrl, shortUrl, res);
-            }
-          }
-        );
-      }
-    } else {
-      if (errors.length) {
-        res.status(400).json({ error: errors.join(',') });
-        return;
-      }
-
-      shortUrl = nanoid();
-      storeUrlShort(req.body.fullUrl, shortUrl, res);
+  if (shortUrl) {
+    errors.push(validateShortcode(shortUrl));
+    errors.push(validateFullUrl(fullUrl));
+    errors = errors.flat();
+    if (errors.length > 0) {
+      res.render('formresult', { errors: errors, shortUrl: '' });
+      return;
     }
-  });
+    storeUrlShort(fullUrl, shortUrl, res);
+  } else {
+    shortUrl = generateUniqueShortcode();
+    errors.push(validateFullUrl(fullUrl));
+    errors = errors.flat();
+    if (errors.length > 0) {
+      res.render('formresult', { errors: errors, shortUrl: '' });
+      return;
+    }
+    storeUrlShort(fullUrl, shortUrl, res);
+  }
 };
 
-const addClick = (id, url, res) => {
+const addClick = (id) => {
   const data = {
     urlId: id,
     date: Date.now(),
@@ -92,71 +43,76 @@ const addClick = (id, url, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-
-    res.redirect(url);
   });
 };
 
 exports.goToUrl = (req, res, next) => {
   const errors = [];
-  db.get(
-    `SELECT * FROM urls WHERE shortURL = ?`,
-    [req.params.shortUrl],
-    (err, queryResult) => {
-      if (err) {
-        errors.push('Shortcode not found');
-        res.status(404).json({ error: errors.join(',') });
-        return;
+  if (req.params.shortUrl == 'favicon.ico') {
+    return;
+  } else {
+    db.get(
+      `SELECT * FROM urls WHERE shortURL = ?`,
+      [req.params.shortUrl],
+      (err, queryResult) => {
+        if (err) {
+          errors.push('Shortcode not found');
+          res.status(404).json({ error: errors.join(',') });
+          return;
+        }
+        addClick(queryResult.id);
+        res.redirect(queryResult.fullUrl);
       }
-
-      addClick(queryResult.id, queryResult.fullUrl, res);
-    }
-  );
+    );
+  }
 };
 
-exports.getStats = (req, res, next) => {
+exports.getStats = async (req, res, next) => {
   const errors = [];
   db.get(
     `SELECT * FROM urls WHERE shortURL = ?`,
     [req.params.shortUrl],
-    (err, queryResult) => {
+    async (err, queryResult) => {
       if (err || queryResult === undefined) {
         errors.push('Shortcode not found');
         res.status(404).json({ error: errors.join(',') });
         return;
       } else {
+        const id = queryResult.id;
         const createdAt = queryResult.createdAt;
-        const allVisits = [];
-        db.each(
-          `SELECT * FROM stats WHERE urlId = ? ORDER BY date`,
-          [queryResult.id],
-          (err, row) => {
-            if (err) {
-              res.status(400).json({ error: err.message });
-              return;
-            } else {
-              allVisits.push(row);
-            }
-          },
-          () => {
-            const stats = _.map(allVisits, (element) =>
-              _.pick(element, ['date'])
-            );
-            const dates = stats.map((element) => {
-              return element.date;
-            });
-            const lastVisit = dates[dates.length - 1];
-            const clicksCount = stats.length;
-            const response = {
-              createdAt,
-              lastVisit,
-              dates,
-              clicksCount,
-            };
-            res.send(response);
-          }
-        );
+        const clicks = await clicksCount(id);
+        const lastVisit = await lastVisitDate(id);
+        const dates = await getDates(id);
+
+        const data = {
+          createdAt,
+          lastVisit,
+          dates,
+          clicks,
+        };
+
+        res.render('stats', {data: data});
       }
+    }
+  );
+};
+
+exports.getAllUrls = (req, res, next) => {
+  const errors = [];
+  const allUrls = [];
+  db.each(
+    `SELECT * FROM urls`,
+    (err, queryResult) => {
+      if (err || queryResult === undefined) {
+        errors.push('Urls not found');
+        res.status(404).json({ error: errors.join(',') });
+        return;
+      } else {
+        allUrls.push(queryResult);
+      }
+    },
+    () => {
+      res.render('index', { allUrls: allUrls, errors: errors });
     }
   );
 };

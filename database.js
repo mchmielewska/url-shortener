@@ -27,7 +27,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
       `CREATE TABLE IF NOT EXISTS stats (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               urlId INTEGER, 
-              date DATE,
+              date TIMESTAMP,
               FOREIGN KEY(urlId) REFERENCES urls(id)
               )`,
       (err) => {
