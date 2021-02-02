@@ -1,6 +1,10 @@
-const { validateShortcode, generateUniqueShortcode, validateFullUrl } = require ('../lib/dataValidation');
-const { storeUrlShort } = require ('../lib/dataStorage');
-const { clicksCount, lastVisitDate, getDates } = require ('../lib/stats');
+const {
+  validateShortcode,
+  generateUniqueShortcode,
+  validateFullUrl,
+} = require('../lib/dataValidation');
+const { storeUrlShort } = require('../lib/dataStorage');
+const { getStatsForShortcode, getDates } = require('../lib/stats');
 const db = require('../database');
 
 exports.createUrl = (req, res, next) => {
@@ -68,33 +72,19 @@ exports.goToUrl = (req, res, next) => {
 };
 
 exports.getStats = async (req, res, next) => {
-  const errors = [];
-  db.get(
-    `SELECT * FROM urls WHERE shortURL = ?`,
-    [req.params.shortUrl],
-    async (err, queryResult) => {
-      if (err || queryResult === undefined) {
-        errors.push('Shortcode not found');
-        res.status(404).json({ error: errors.join(',') });
-        return;
-      } else {
-        const id = queryResult.id;
-        const createdAt = queryResult.createdAt;
-        const clicks = await clicksCount(id);
-        const lastVisit = await lastVisitDate(id);
-        const dates = await getDates(id);
+  const stats = await getStatsForShortcode(req.params.shortUrl);
 
-        const data = {
-          createdAt,
-          lastVisit,
-          dates,
-          clicks,
-        };
+  const id = stats.id;
+  const dates = await getDates(id);
 
-        res.render('stats', {data: data});
-      }
-    }
-  );
+  const data = {
+    createdAt: stats.createdAt,
+    lastVisit: stats.lastVisit,
+    dates,
+    clicks: stats.clicks,
+  };
+
+  res.render('stats', {data: data});
 };
 
 exports.getAllUrls = (req, res, next) => {
