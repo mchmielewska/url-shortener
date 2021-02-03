@@ -84,7 +84,7 @@ exports.getStats = async (req, res, next) => {
     clicks: stats.clicks,
   };
 
-  res.render('stats', {data: data});
+  res.status(200).json(data);
 };
 
 exports.getAllUrls = (req, res, next) => {
@@ -102,7 +102,7 @@ exports.getAllUrls = (req, res, next) => {
       }
     },
     () => {
-      res.render('index', { allUrls: allUrls, errors: errors });
+      res.status(200).json(allUrls);
     }
   );
 };
