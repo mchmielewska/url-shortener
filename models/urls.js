@@ -1,6 +1,6 @@
 const knex = require('knex');
 const config = require('../knexfile');
-const db = knex(config.development);
+const db = require("../db-config")
 
 exports.add = async (url) => {
   const [id] = await db('urls').insert(url);

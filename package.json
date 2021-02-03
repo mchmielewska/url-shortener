@@ -2,7 +2,9 @@
   "name": "shortster",
   "version": "1.0.0",
   "description": "",
-  "engines" : { "node" : ">=14.0.0" },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "main": "index.js",
   "scripts": {
     "start": "nodemon app.js",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "mocha": "^8.2.1",
     "nodemon": "^2.0.7",
     "sinon": "^9.2.4"

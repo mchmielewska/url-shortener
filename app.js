@@ -13,3 +13,5 @@ app.set('view engine', 'ejs');
 app.use('/', routes);
 
 app.listen(process.env.PORT || 4000);
+
+module.exports = app;
