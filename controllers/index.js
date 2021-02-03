@@ -1,108 +1,82 @@
-const {
-  validateShortcode,
-  generateUniqueShortcode,
-  validateFullUrl,
-} = require('../lib/dataValidation');
-const { storeUrlShort } = require('../lib/dataStorage');
+const dataValidation = require('../lib/dataValidation');
+const dataStorage = require('../lib/dataStorage');
 const { getStatsForShortcode, getDates } = require('../lib/stats');
-const db = require('../database');
+const urls = require('../models/urls');
 
-exports.createUrl = (req, res, next) => {
+exports.createUrl = async (req, res) => {
   let errors = [];
-  let shortUrl = req.body.shortUrl;
-  let fullUrl = req.body.fullUrl;
+  let { shortUrl, fullUrl } = req.body;
 
   if (shortUrl) {
-    errors.push(validateShortcode(shortUrl));
-    errors.push(validateFullUrl(fullUrl));
+    errors.push(dataValidation.validateShortcode(shortUrl));
+    errors.push(dataValidation.validateFullUrl(fullUrl));
     errors = errors.flat();
     if (errors.length > 0) {
-      res.render('formresult', { errors: errors, shortUrl: '' });
+      res.status(404).json({ message: errors.join(',') });
       return;
+    } else {
+      dataStorage.storeUrlShort(fullUrl, shortUrl, res);
     }
-    storeUrlShort(fullUrl, shortUrl, res);
   } else {
-    shortUrl = generateUniqueShortcode();
-    errors.push(validateFullUrl(fullUrl));
+    shortUrl = dataValidation.generateUniqueShortcode();
+    errors.push(dataValidation.validateFullUrl(fullUrl));
     errors = errors.flat();
     if (errors.length > 0) {
-      res.render('formresult', { errors: errors, shortUrl: '' });
+      res.status(404).json({ message: errors.join(',') });
       return;
+    } else {
+      dataStorage.storeUrlShort(fullUrl, shortUrl, res);
     }
-    storeUrlShort(fullUrl, shortUrl, res);
   }
 };
 
-const addClick = (id) => {
-  const data = {
-    urlId: id,
-    date: Date.now(),
-  };
-
-  const sql = 'INSERT INTO stats (urlId, date) VALUES (?,?)';
-  const params = [data.urlId, data.date];
-
-  db.run(sql, params, (err, sqlRes) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-  });
-};
-
-exports.goToUrl = (req, res, next) => {
-  const errors = [];
-  if (req.params.shortUrl == 'favicon.ico') {
-    return;
-  } else {
-    db.get(
-      `SELECT * FROM urls WHERE shortURL = ?`,
-      [req.params.shortUrl],
-      (err, queryResult) => {
-        if (err) {
-          errors.push('Shortcode not found');
-          res.status(404).json({ error: errors.join(',') });
-          return;
-        }
-        addClick(queryResult.id);
-        res.redirect(queryResult.fullUrl);
-      }
-    );
-  }
-};
-
-exports.getStats = async (req, res, next) => {
-  const stats = await getStatsForShortcode(req.params.shortUrl);
-
-  const id = stats.id;
-  const dates = await getDates(id);
-
-  const data = {
-    createdAt: stats.createdAt,
-    lastVisit: stats.lastVisit,
-    dates,
-    clicks: stats.clicks,
-  };
-
-  res.status(200).json(data);
-};
-
-exports.getAllUrls = (req, res, next) => {
-  const errors = [];
-  const allUrls = [];
-  db.each(
-    `SELECT * FROM urls`,
-    (err, queryResult) => {
-      if (err || queryResult === undefined) {
-        errors.push('Urls not found');
-        res.status(404).json({ error: errors.join(',') });
-        return;
+exports.goToUrl = (req, res) => {
+  const { shortUrl } = req.params;
+  urls
+    .findByShortcode(shortUrl)
+    .then((url) => {
+      if (url) {
+        console.log(url);
+        dataStorage.storeClick(url.id, res);
+        res.redirect(url.fullUrl);
       } else {
-        allUrls.push(queryResult);
+        res.status(404).json({ message: 'Shortcode not found' });
       }
-    },
-    () => {
-      res.status(200).json(allUrls);
-    }
-  );
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'Unable to perform operation' });
+    });
+};
+
+exports.getStats = async (req, res) => {
+  const { shortUrl } = req.params;
+  await getStatsForShortcode(shortUrl, res);
+};
+
+exports.getAllUrls = (req, res) => {
+  urls
+    .findAll()
+    .then((urls) => {
+      res.status(200).json(urls);
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'Unable to retrieve all records' });
+    });
+};
+
+exports.deleteUrl = (req, res) => {
+  const { id } = req.params;
+
+  urls
+    .remove(id)
+    .then((count) => {
+      if (count > 0) {
+        res.status(200).json({ message: 'Successfully deleted' });
+      } else {
+        res.status(404).json({ message: 'Unable to locate record' });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'Unable to perform operation' });
+    });
 };
