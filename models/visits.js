@@ -3,15 +3,13 @@ const config = require('../knexfile');
 const db = knex(config.development);
 
 exports.addVisit = async (visit) => {
-  const url = parseInt(visit.urlId, 10);
-  const [id] = await db('visits').where({ urlId: url }).insert(visit);
-  const newVisit = exports.findVisitById(id);
-  return newVisit;
+  const urlId = parseInt(visit.urlId, 10);
+  const [id] = await db('visits').where({ urlId: urlId }).insert(visit);
+  return exports.findVisitById(id);
 };
 
-exports.findVisitById = async (id) => {
-  const result = await db('visits').where({ id }).first();
-  return result;
+exports.findVisitById = (id) => {
+  return db('visits').where({ id }).first();
 };
 
 exports.fullStats = (shortUrl) => {
@@ -19,7 +17,7 @@ exports.fullStats = (shortUrl) => {
     .leftJoin('visits', 'urls.id', 'urlId')
     .select('urls.id as id', 'shortUrl', 'fullUrl', 'createdAt')
     .where({ shortUrl: shortUrl })
-    .count({ clicks: 'urls.id' })
+    .count({ clicks: 'visits.id' })
     .max('visits.date', { as: 'lastVisit' });
 };
 

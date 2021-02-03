@@ -1,8 +1,7 @@
 const { render } = require('ejs');
 const express = require('express');
-const db = require('./database.js');
 const app = express();
-const routes = require('./routers/');
+const routes = require('./routers/urls');
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
