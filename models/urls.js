@@ -16,5 +16,10 @@ exports.findById = (urlId) => {
 };
 
 exports.findByShortcode = (shortcode) => {
-  return db('urls').where({ shortUrl: shortcode }).first();
+  return db('urls').where({ shortUrl: shortcode }).first().then((row) => {
+    if (!row)
+      return Promise.reject("Record not found");
+    
+    return row;
+  })
 };

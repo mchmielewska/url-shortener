@@ -12,6 +12,13 @@ exports.findVisitById = (id) => {
   return db('visits').where({ id }).first();
 };
 
+exports.findAllVisitsForShortcode = (shortUrl) => {
+  return db('urls')
+  .leftJoin('visits', 'urls.id', 'urlId')
+  .select('urls.id as id', 'shortUrl', 'date')
+  .where({ shortUrl: shortUrl })
+}
+
 exports.fullStats = (shortUrl) => {
   return db('urls')
     .leftJoin('visits', 'urls.id', 'urlId')

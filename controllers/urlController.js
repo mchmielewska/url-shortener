@@ -29,19 +29,14 @@ exports.goToUrl = (req, res) => {
   const { shortUrl } = req.params;
   urls
     .findByShortcode(shortUrl)
-    .then((url) => {
-      if (url) {
-        visits.addVisit({ urlId: url.id });
-        return url;
-      } else {
-        res.status(404).json({ message: 'Shortcode not found' });
-      }
+    .then((url) => { 
+      let visit = visits.addVisit({ urlId: url.id });
+      return url;
     })
-    .then((url) => {
-      return res.redirect(url.fullUrl);
-    })
+    .then(
+      (url) => { return res.redirect(url.fullUrl); }, 
+      (error) => res.status(404).json({ message: 'Shortcode not found' }))
     .catch((error) => {
-      console.log(error);
       res.status(500).json({ message: 'Unable to perform operation' });
     });
 };

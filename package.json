@@ -9,7 +9,7 @@
   "scripts": {
     "start": "nodemon app.js",
     "pretty": "prettier --write \"./**/*.{js,jsx,json}\"",
-    "test": "mocha './*/*.test.js'"
+    "test": "mocha './*/*.test.js' --exit"
   },
   "author": "",
   "license": "ISC",
