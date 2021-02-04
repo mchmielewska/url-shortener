@@ -1,6 +1,6 @@
 const knex = require('knex');
 const config = require('../knexfile');
-const db = require("../db-config");
+const db = require('../db-config');
 
 exports.addVisit = async (visit) => {
   const urlId = parseInt(visit.urlId, 10);
@@ -12,13 +12,6 @@ exports.findVisitById = (id) => {
   return db('visits').where({ id }).first();
 };
 
-exports.findAllVisitsForShortcode = (shortUrl) => {
-  return db('urls')
-  .leftJoin('visits', 'urls.id', 'urlId')
-  .select('urls.id as id', 'shortUrl', 'date')
-  .where({ shortUrl: shortUrl })
-}
-
 exports.fullStats = (shortUrl) => {
   return db('urls')
     .leftJoin('visits', 'urls.id', 'urlId')
@@ -26,8 +19,4 @@ exports.fullStats = (shortUrl) => {
     .where({ shortUrl: shortUrl })
     .count({ clicks: 'visits.id' })
     .max('visits.date', { as: 'lastVisit' });
-};
-
-exports.datesOfVisits = (id) => {
-  return db('visits').select('date').where({ urlId: id }).orderBy('date');
 };

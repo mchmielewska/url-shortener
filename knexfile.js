@@ -1,5 +1,5 @@
 // Update with your config settings.
-
+/* istanbul ignore next */
 module.exports = {
   test: {
     client: 'sqlite3',
@@ -7,10 +7,10 @@ module.exports = {
       filename: './data/db_test.sqlite3',
     },
     migrations: {
-      directory: __dirname + '/migrations'
+      directory: __dirname + '/migrations',
     },
     seeds: {
-      directory: __dirname + '/seeds'
+      directory: __dirname + '/seeds',
     },
     useNullAsDefault: true,
     pool: {
@@ -25,7 +25,7 @@ module.exports = {
       filename: './data/db.sqlite3',
     },
     migrations: {
-      directory: __dirname + '/migrations'
+      directory: __dirname + '/migrations',
     },
     useNullAsDefault: true,
     pool: {

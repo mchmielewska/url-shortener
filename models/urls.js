@@ -1,6 +1,6 @@
 const knex = require('knex');
 const config = require('../knexfile');
-const db = require("../db-config")
+const db = require('../db-config');
 
 exports.add = async (url) => {
   const [id] = await db('urls').insert(url);
@@ -16,10 +16,12 @@ exports.findById = (urlId) => {
 };
 
 exports.findByShortcode = (shortcode) => {
-  return db('urls').where({ shortUrl: shortcode }).first().then((row) => {
-    if (!row)
-      return Promise.reject("Record not found");
-    
-    return row;
-  })
+  return db('urls')
+    .where({ shortUrl: shortcode })
+    .first()
+    .then((row) => {
+      if (!row) return Promise.reject('Record not found');
+
+      return row;
+    });
 };
